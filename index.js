@@ -1,7 +1,11 @@
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 const User = require('./models/user.model')
+
+require('dotenv').config()
 
 const app = express()
 
@@ -11,24 +15,34 @@ app.use(express.json())
 mongoose.connect('mongodb://localhost:27017/my-ride')
 
 app.post('/api/register', async (req, res) => {
-    console.log(req.body)
     try {
-        await User.create({
-                email: req.body.email,
-                userName: req.body.userName,
-                password: req.body.password
+        const user = await User.create({
+            email: req.body.email,
+            userName: req.body.userName,
+            password: req.body.password
         })
+        console.log(user)
+        res.json({status: 'ok'})
     } catch (e) {
-        res.send(`{"status": "error"}`)
+        res.send(JSON.stringify({"status": "error"}))
     }
-    res.send(JSON.stringify({status: 'ok'}))
 })
 
 app.post('/api/login', async (req, res) => {
-    const user = await User.findOne({email: req.body.email, password: req.body.password})
+    const user = await User.findOne({email: req.body.email})
 
-    if(user) res.send(JSON.stringify({status: 'ok', user: true}))
-    else res.json({status: "Error: User not found"})
+    if(user) {
+        if(bcrypt.compare(req.body.password, user.password)) {
+
+            const token = jwt.sign({
+                email: user.email,
+                userName: user.userName
+            }, process.env.JWT_SECRET)
+
+            res.json({status: "ok", token: token})
+
+        } else res.json({status: "Wrong username or password"})
+    } else res.json({status: "Wrong username or password"})
 })
 
 app.listen(5001, () => {
