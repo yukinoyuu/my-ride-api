@@ -45,6 +45,25 @@ app.post('/api/login', async (req, res) => {
     } else res.json({status: "Wrong username or password"})
 })
 
+app.get('/', async (req, res) => {
+    const AuthHeader = req.headers['authorization']
+    if(!AuthHeader){
+        res.status(403).json({status: "Error: Authorization failed"})
+    }
+    else {
+        const JWTDecode = jwt.verify(AuthHeader.split(' ')[1], process.env.JWT_SECRET)
+        const user = await User.findOne({email: JWTDecode.email})
+
+
+        if(user){
+            console.log(user)
+            res.json({status: `Logged in as ${user.userName}`})
+        } else {
+            res.status(403).json({status: "Error: Authorization failed"})
+        }
+    }
+})
+
 app.listen(5001, () => {
     console.log('Listening on port 5001')
 })
