@@ -45,7 +45,7 @@ app.post('/api/login', async (req, res) => {
     } else res.json({status: "Wrong username or password"})
 })
 
-app.get('/', async (req, res) => {
+app.get('/api', async (req, res) => {
     const AuthHeader = req.headers['authorization']
     if(!AuthHeader){
         res.status(403).json({status: "Error: Authorization failed"})
